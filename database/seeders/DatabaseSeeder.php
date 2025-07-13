@@ -19,5 +19,10 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Run the IGDB seeder to populate game data
+        $this->call([
+            IGDBSeeder::class,
+        ]);
     }
 }
