@@ -20,7 +20,7 @@ class FetchIGDBData extends Command
      *
      * @var string
      */
-    protected $signature = 'igdb:fetch {--limit=50 : Number of games to fetch} {--platform= : Platform ID to filter by} {--genre= : Genre ID to filter by}';
+    protected $signature = 'igdb:fetch {--limit=50 : Number of games to fetch} {--offset=0 : Offset for pagination} {--platform= : Platform ID to filter by} {--genre= : Genre ID to filter by}';
 
     /**
      * The console command description.
@@ -37,6 +37,7 @@ class FetchIGDBData extends Command
         $this->info('Starting IGDB data import...');
 
         $limit = $this->option('limit');
+        $offset = $this->option('offset');
         $platformId = $this->option('platform');
         $genreId = $this->option('genre');
 
@@ -47,7 +48,7 @@ class FetchIGDBData extends Command
         $this->fetchAndCreateGenres();
 
         // Finally, fetch games with filters if provided
-        $this->fetchAndCreateGames($limit, $platformId, $genreId);
+        $this->fetchAndCreateGames($limit, $offset, $platformId, $genreId);
 
         $this->info('IGDB data import completed successfully!');
 
@@ -133,7 +134,7 @@ class FetchIGDBData extends Command
     /**
      * Fetch games from IGDB and create them as products in our database
      */
-    private function fetchAndCreateGames(int $limit = 50, ?int $platformId = null, ?int $genreId = null): void
+    private function fetchAndCreateGames(int $limit = 50, int $offset = 0, ?int $platformId = null, ?int $genreId = null): void
     {
         $this->info('Fetching games from IGDB...');
 
@@ -141,9 +142,17 @@ class FetchIGDBData extends Command
         $query = Game::with(['cover', 'genres', 'platforms', 'screenshots'])
             ->where('category', '=', 0) // Main game
             ->where('version_parent', '=', null) // Not a version of another game
-            ->where('rating', '>', 70) // Only games with good ratings
+            ->offset($offset)
             ->limit($limit)
             ->orderBy('rating', 'desc');
+
+        // Set rating threshold based on platform filter
+        // For PS4 games (ID 48), use a lower threshold to get more games
+        if ($platformId && $platformId == 48) {
+            $query->where('rating', '>', 50); // Lower threshold for PS4 games
+        } else {
+            $query->where('rating', '>', 70); // Original threshold for other games
+        }
 
         // Add platform filter if provided
         if ($platformId) {
@@ -161,10 +170,14 @@ class FetchIGDBData extends Command
         $this->info('Found ' . count($games) . ' games');
         $bar = $this->output->createProgressBar(count($games));
 
+        $importedCount = 0;
+        $skippedCount = 0;
+
         foreach ($games as $igdbGame) {
             // Skip if no cover or platforms
             if (!isset($igdbGame->cover) || empty($igdbGame->platforms)) {
                 $bar->advance();
+                $skippedCount++;
                 continue;
             }
 
@@ -184,8 +197,35 @@ class FetchIGDBData extends Command
                 }
             }
 
-            // Generate SKU
-            $sku = 'GAME-' . strtoupper(substr(md5($igdbGame->id . $igdbGame->name), 0, 8));
+            // Check if product with this name already exists
+            $existingProduct = Product::where('name', $igdbGame->name)->first();
+            if ($existingProduct) {
+                $this->line("\nSkipping existing product: " . $igdbGame->name);
+                $bar->advance();
+                $skippedCount++;
+                continue;
+            }
+
+            // Generate unique SKU
+            $attempts = 0;
+            do {
+                if ($attempts > 0) {
+                    // Add random suffix on retry
+                    $randomSuffix = rand(1000, 9999);
+                    $sku = 'GAME-' . strtoupper(substr(md5($igdbGame->id . $igdbGame->name . $randomSuffix), 0, 8));
+                } else {
+                    $sku = 'GAME-' . strtoupper(substr(md5($igdbGame->id . $igdbGame->name), 0, 8));
+                }
+                $skuExists = Product::where('sku', $sku)->exists();
+                $attempts++;
+            } while ($skuExists && $attempts < 5);
+
+            if ($skuExists) {
+                $this->error("Could not generate unique SKU for: " . $igdbGame->name);
+                $bar->advance();
+                $skippedCount++;
+                continue;
+            }
 
             // Get platform
             $platformName = isset($igdbGame->platforms[0]->name) ? $igdbGame->platforms[0]->name : null;
@@ -195,13 +235,31 @@ class FetchIGDBData extends Command
                 $platform = Platform::where('name', $platformName)->first();
             }
 
+            // For PlayStation 4 games, explicitly set the platform
+            if ($platformId && $platformId == 48 && !$platform) {
+                $platform = Platform::where('name', 'PlayStation 4')->first();
+
+                // If PlayStation 4 platform doesn't exist yet, create it
+                if (!$platform) {
+                    $platform = Platform::create([
+                        'name' => 'PlayStation 4',
+                        'slug' => 'playstation-4',
+                        'logo' => 'https://images.igdb.com/igdb/image/upload/t_thumb/pl6f.jpg', // PS4 logo
+                        'description' => 'Sony PlayStation 4 gaming console',
+                        'is_active' => true,
+                    ]);
+
+                    $this->info('Created PlayStation 4 platform: ' . $platform->id);
+                }
+            }
+
             DB::beginTransaction();
 
             try {
                 // Create product
                 $product = Product::create([
                     'name' => $igdbGame->name,
-                    'slug' => Str::slug($igdbGame->name . '-' . ($platform ? $platform->name : 'multi')),
+                    'slug' => Str::slug($igdbGame->name . '-' . ($platform ? $platform->slug : 'multi')),
                     'description' => $igdbGame->summary ?? null,
                     'short_description' => Str::limit($igdbGame->summary ?? '', 150),
                     'price' => $price,
@@ -264,9 +322,11 @@ class FetchIGDBData extends Command
                 }
 
                 DB::commit();
+                $importedCount++;
             } catch (\Exception $e) {
                 DB::rollBack();
                 $this->error('Error importing game: ' . $igdbGame->name . ' - ' . $e->getMessage());
+                $skippedCount++;
             }
 
             $bar->advance();
@@ -274,5 +334,6 @@ class FetchIGDBData extends Command
 
         $bar->finish();
         $this->newLine();
+        $this->info("Import summary: {$importedCount} games imported, {$skippedCount} games skipped.");
     }
 }
