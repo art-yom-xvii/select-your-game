@@ -5,23 +5,18 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
     plugins: [
         laravel({
-            input: ["resources/js/app.js"],
+            input: ["resources/js/app.js", "resources/js/home.js"],
             refresh: true,
         }),
         tailwindcss(),
     ],
     server: {
-        host: "0.0.0.0",
-        port: 5173,
-        origin: "https://vite.laravel.dev",
-        cors: {
-            origin: ["https://laravel.dev", "https://vite.laravel.dev"],
-            credentials: true,
-        },
+        host: "localhost",
+        port: 5174,
+        strictPort: true,
         hmr: {
-            host: "vite.laravel.dev",
-            protocol: "wss",
-            clientPort: 443,
+            host: "localhost",
+            port: 5174,
         },
     },
 });
