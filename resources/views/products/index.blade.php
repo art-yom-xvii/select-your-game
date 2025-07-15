@@ -34,12 +34,24 @@
                 <!-- Filters Sidebar -->
                 <div class="w-full lg:w-1/4">
                     <div class="bg-white p-6 rounded shadow-sm mb-6">
-                        <h3 class="text-lg font-bold mb-4">Categories</h3>
+                        <!-- Clear All Filters Button -->
+                        <div class="mt-6 text-center">
+                            <button id="clear-all-filters" class="bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded">
+                                Clear All Filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold">Categories</h3>
+                            <button type="button" class="clear-filter text-sm text-primary hover:underline" data-filter="categories">Clear</button>
+                        </div>
                         <div class="space-y-2">
                             @foreach ($categories as $category)
                                 <div class="flex items-center">
-                                    <input type="checkbox" id="category-{{ $category->id }}" class="filter-checkbox" data-filter="category" value="{{ $category->slug }}"
-                                        @if (request('category') === $category->slug) checked @endif
+                                    <input type="checkbox" id="category-{{ $category->id }}" class="filter-checkbox" data-filter="categories" value="{{ $category->id }}"
+                                        @if (request('categories') && in_array($category->id, is_array(request('categories')) ? request('categories') : explode(',', request('categories')))) checked @endif
                                     >
                                     <label for="category-{{ $category->id }}" class="ml-2 text-gray-700 hover:text-primary cursor-pointer">
                                         {{ $category->name }}
@@ -50,12 +62,15 @@
                     </div>
 
                     <div class="bg-white p-6 rounded shadow-sm mb-6">
-                        <h3 class="text-lg font-bold mb-4">Platforms</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold">Platforms</h3>
+                            <button type="button" class="clear-filter text-sm text-primary hover:underline" data-filter="platforms">Clear</button>
+                        </div>
                         <div class="space-y-2">
                             @foreach ($platforms as $platform)
                                 <div class="flex items-center">
-                                    <input type="checkbox" id="platform-{{ $platform->id }}" class="filter-checkbox" data-filter="platform" value="{{ $platform->slug }}"
-                                        @if (request('platform') === $platform->slug) checked @endif
+                                    <input type="checkbox" id="platform-{{ $platform->id }}" class="filter-checkbox" data-filter="platforms" value="{{ $platform->id }}"
+                                        @if (request('platforms') && in_array($platform->id, is_array(request('platforms')) ? request('platforms') : explode(',', request('platforms')))) checked @endif
                                     >
                                     <label for="platform-{{ $platform->id }}" class="ml-2 text-gray-700 hover:text-primary cursor-pointer">
                                         {{ $platform->name }}
@@ -66,7 +81,9 @@
                     </div>
 
                     <div class="bg-white p-6 rounded shadow-sm">
-                        <h3 class="text-lg font-bold mb-4">Product Type</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold">Product Type</h3>
+                        </div>
                         <div class="space-y-2">
                             <div class="flex items-center">
                                 <input type="radio" name="type" id="type-all" class="filter-radio" data-filter="type" value=""
@@ -207,21 +224,40 @@
         const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
         const filterRadios = document.querySelectorAll('.filter-radio');
         const filterSelect = document.querySelector('.filter-select');
+        const clearAllFiltersButton = document.getElementById('clear-all-filters');
+        const clearFilterButtons = document.querySelectorAll('.clear-filter');
+
+        console.log('Filter Checkboxes:', filterCheckboxes);
 
         const applyFilters = () => {
             const params = new URLSearchParams(window.location.search);
 
             // Get checkbox filters (categories, platforms)
+            const selectedCategories = [];
+            const selectedPlatforms = [];
+
             filterCheckboxes.forEach(checkbox => {
                 if (checkbox.checked) {
-                    params.set(checkbox.dataset.filter, checkbox.value);
-                } else {
-                    // Only delete if this specific value was set
-                    if (params.get(checkbox.dataset.filter) === checkbox.value) {
-                        params.delete(checkbox.dataset.filter);
+                    if (checkbox.dataset.filter === 'categories') {
+                        selectedCategories.push(checkbox.value);
+                    } else if (checkbox.dataset.filter === 'platforms') {
+                        selectedPlatforms.push(checkbox.value);
                     }
                 }
             });
+
+            // Update URL parameters for categories and platforms
+            if (selectedCategories.length > 0) {
+                params.set('categories', selectedCategories.join(','));
+            } else {
+                params.delete('categories');
+            }
+
+            if (selectedPlatforms.length > 0) {
+                params.set('platforms', selectedPlatforms.join(','));
+            } else {
+                params.delete('platforms');
+            }
 
             // Get radio filters (product type)
             filterRadios.forEach(radio => {
@@ -234,16 +270,21 @@
                 }
             });
 
-            // Get sort option
-            if (filterSelect.value) {
-                params.set('sort', filterSelect.value);
+            // Get sort value
+            const sortValue = filterSelect.value;
+            if (sortValue) {
+                params.set('sort', sortValue);
+            } else {
+                params.delete('sort');
             }
 
-            // Navigate to filtered URL
-            window.location.href = `${window.location.pathname}?${params.toString()}`;
+            // Update URL
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            console.log('New URL:', newUrl);
+            window.location.href = newUrl;
         };
 
-        // Add event listeners
+        // Event listeners for checkboxes and radios
         filterCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', applyFilters);
         });
@@ -252,7 +293,53 @@
             radio.addEventListener('change', applyFilters);
         });
 
+        // Event listener for sort select
         filterSelect.addEventListener('change', applyFilters);
+
+        // Handle clear all filters button
+        clearAllFiltersButton.addEventListener('click', () => {
+            const params = new URLSearchParams(window.location.search);
+            params.delete('categories');
+            params.delete('platforms');
+            params.delete('type');
+            params.delete('sort');
+            window.location.href = `${window.location.pathname}?${params.toString()}`;
+        });
+
+        // Handle individual filter section clear buttons
+        clearFilterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const filterType = button.dataset.filter;
+                const params = new URLSearchParams(window.location.search);
+
+                // Uncheck checkboxes or reset radio buttons based on filter type
+                if (filterType === 'categories') {
+                    filterCheckboxes.forEach(checkbox => {
+                        if (checkbox.dataset.filter === 'categories') {
+                            checkbox.checked = false;
+                        }
+                    });
+                    params.delete('categories');
+                } else if (filterType === 'platforms') {
+                    filterCheckboxes.forEach(checkbox => {
+                        if (checkbox.dataset.filter === 'platforms') {
+                            checkbox.checked = false;
+                        }
+                    });
+                    params.delete('platforms');
+                } else if (filterType === 'type') {
+                    filterRadios.forEach(radio => {
+                        if (radio.dataset.filter === 'type' && radio.value === '') {
+                            radio.checked = true;
+                        }
+                    });
+                    params.delete('type');
+                }
+
+                // Update URL
+                window.location.href = `${window.location.pathname}?${params.toString()}`;
+            });
+        });
     });
 </script>
 @endpush
