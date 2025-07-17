@@ -8,13 +8,14 @@ use App\Models\Platform;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the products with filters.
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         // Detailed logging of request parameters
         Log::channel('daily')->info('Product Index Request', [
@@ -25,7 +26,7 @@ class ProductController extends Controller
         ]);
 
         // Start with base query
-        $query = Product::active()->with(['primaryImage', 'categories']);
+        $query = Product::active()->with(['primaryImage', 'platform', 'categories']);
 
         // Log total active products before filtering
         $totalActiveProducts = Product::active()->count();
@@ -50,29 +51,11 @@ class ProductController extends Controller
         $categories = array_filter(array_map('intval', $categories));
         $platforms = array_filter(array_map('intval', $platforms));
 
-        // Log filtering details
-        Log::channel('daily')->info('Filtering Details', [
-            'categories' => $categories,
-            'platforms' => $platforms,
-            'type' => $type,
-            'sort' => $sort,
-        ]);
-
         // Category filtering
         if (!empty($categories)) {
-            Log::channel('daily')->info('Category Filtering', [
-                'selected_category_ids' => $categories,
-            ]);
-
             $query->whereHas('categories', function ($q) use ($categories) {
                 $q->whereIn('categories.id', $categories);
             });
-
-            // Log the SQL query for debugging
-            Log::channel('daily')->info('Category Filter Query', [
-                'query_sql' => $query->toSql(),
-                'query_bindings' => $query->getBindings(),
-            ]);
         }
 
         // Platform filtering
@@ -105,27 +88,27 @@ class ProductController extends Controller
                 $query->orderBy('created_at', 'desc');
         }
 
-        // Log the final query details
-        Log::channel('daily')->info('Product Query Details', [
-            'query_sql' => $query->toSql(),
-            'query_bindings' => $query->getBindings(),
-        ]);
-
         // Paginate products
         $products = $query->paginate(16);
 
-        // Log products details
-        Log::channel('daily')->info('Products Retrieved', [
-            'total_products' => $products->total(),
-            'current_page_count' => $products->count(),
-            'current_page' => $products->currentPage(),
+        // Check if this is an AJAX request
+        if ($request->ajax()) {
+            // Render just the product cards
+            $html = view('products.partials.product-grid', compact('products'))->render();
+            return response()->json([
+                'html' => $html,
+                'has_more' => $products->hasMorePages(),
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+            ]);
+        }
+
+        // Regular page view
+        return view('products.index', [
+            'products' => $products,
+            'categories' => Category::active()->get(),
+            'platforms' => Platform::active()->get(),
         ]);
-
-        // Get all active categories and platforms for filter display
-        $categories = Category::where('is_active', true)->orderBy('sort_order')->get();
-        $platforms = Platform::where('is_active', true)->get();
-
-        return view('products.index', compact('products', 'categories', 'platforms'));
     }
 
     /**

@@ -33,7 +33,6 @@ class HomeController extends Controller
         $categories = Category::where('parent_id', null)
             ->with(['children'])
             ->orderBy('sort_order')
-            ->take(6)
             ->get();
 
         $newReleases = Product::active()
