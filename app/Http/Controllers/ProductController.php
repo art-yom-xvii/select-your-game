@@ -7,67 +7,108 @@ use App\Models\Category;
 use App\Models\Platform;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the products with filters.
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
-        $query = Product::active()->with(['primaryImage', 'categories']);
+        // Detailed logging of request parameters
+        Log::channel('daily')->info('Product Index Request', [
+            'categories' => $request['categories'] ?? null,
+            'platforms' => $request['platforms'] ?? null,
+            'type' => $request['type'] ?? null,
+            'sort' => $request['sort'] ?? null,
+        ]);
 
-        // Filter by category if provided
-        if ($request->has('category')) {
-            $category = Category::where('slug', $request->category)->firstOrFail();
-            $query->whereHas('categories', function ($q) use ($category) {
-                $q->where('categories.id', $category->id);
+        // Start with base query
+        $query = Product::active()->with(['primaryImage', 'platform', 'categories']);
+
+        // Log total active products before filtering
+        $totalActiveProducts = Product::active()->count();
+        $totalProductTypes = Product::active()->select('product_type')->distinct()->get();
+
+        Log::channel('daily')->info('Product Counts', [
+            'total_active_products' => $totalActiveProducts,
+            'product_types' => $totalProductTypes->pluck('product_type')->toArray(),
+        ]);
+
+        // Normalize input parameters
+        $categories = $request['categories'] ?? [];
+        $platforms = $request['platforms'] ?? [];
+        $type = $request['type'] ?? null;
+        $sort = $request['sort'] ?? 'newest';
+
+        // Convert comma-separated strings to arrays if needed
+        $categories = is_string($categories) ? explode(',', $categories) : $categories;
+        $platforms = is_string($platforms) ? explode(',', $platforms) : $platforms;
+
+        // Ensure arrays are of integers
+        $categories = array_filter(array_map('intval', $categories));
+        $platforms = array_filter(array_map('intval', $platforms));
+
+        // Category filtering
+        if (!empty($categories)) {
+            $query->whereHas('categories', function ($q) use ($categories) {
+                $q->whereIn('categories.id', $categories);
             });
         }
 
-        // Filter by platform if provided
-        if ($request->has('platform')) {
-            $platform = Platform::where('slug', $request->platform)->firstOrFail();
-            $query->where('platform_id', $platform->id);
+        // Platform filtering
+        if (!empty($platforms)) {
+            $query->whereIn('platform_id', $platforms);
         }
 
-        // Filter by product type
-        if ($request->has('type')) {
-            if ($request->type === 'games') {
-                $query->games();
-            } elseif ($request->type === 'merchandise') {
-                $query->merchandise();
-            }
+        // Product type filtering
+        if ($type === 'games') {
+            $query->where('product_type', 'game');
+        } elseif ($type === 'merchandise') {
+            $query->where('product_type', 'merchandise');
         }
 
-        // Sort options
-        if ($request->has('sort')) {
-            switch ($request->sort) {
-                case 'price-asc':
-                    $query->orderBy('price', 'asc');
-                    break;
-                case 'price-desc':
-                    $query->orderBy('price', 'desc');
-                    break;
-                case 'newest':
-                    $query->orderBy('created_at', 'desc');
-                    break;
-                case 'bestselling':
-                    // This would require additional logic to track bestsellers
-                    $query->orderBy('created_at', 'desc');
-                    break;
-                default:
-                    $query->orderBy('created_at', 'desc');
-            }
-        } else {
-            $query->orderBy('created_at', 'desc');
+        // Sorting
+        switch ($sort) {
+            case 'price-asc':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price-desc':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'bestselling':
+                $query->orderBy('created_at', 'desc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
         }
 
+        // Paginate products
         $products = $query->paginate(16);
-        $categories = Category::where('is_active', true)->orderBy('sort_order')->get();
-        $platforms = Platform::where('is_active', true)->get();
 
-        return view('products.index', compact('products', 'categories', 'platforms'));
+        // Check if this is an AJAX request
+        if ($request->ajax()) {
+            // Render just the product cards
+            $html = view('products.partials.product-grid', compact('products'))->render();
+            return response()->json([
+                'html' => $html,
+                'has_more' => $products->hasMorePages(),
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+            ]);
+        }
+
+        // Regular page view
+        return view('products.index', [
+            'products' => $products,
+            'categories' => Category::active()->get(),
+            'platforms' => Platform::active()->get(),
+        ]);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
@@ -14,10 +15,14 @@ class CategoryController extends Controller
      */
     public function show(string $slug): View
     {
+        Log::info('Attempting to show category', ['slug' => $slug]);
+
         $category = Category::query()
             ->where('slug', $slug)
             ->with(['children'])
             ->firstOrFail();
+
+        Log::info('Category found', ['category' => $category->toArray()]);
 
         // Get all subcategories (if any)
         $categoryIds = [$category->id];
@@ -34,6 +39,12 @@ class CategoryController extends Controller
             ->with(['primaryImage', 'platform'])
             ->orderBy('created_at', 'desc')
             ->paginate(16);
+
+        Log::info('Attempting to render view', [
+            'view' => 'categories.show',
+            'category_id' => $category->id,
+            'products_count' => $products->count()
+        ]);
 
         return view('categories.show', compact('category', 'products'));
     }

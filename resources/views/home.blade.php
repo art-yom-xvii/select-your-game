@@ -2,6 +2,10 @@
 
 @section('title', 'Video Games & Gaming Merchandise')
 
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+@endpush
+
 @section('content')
     <!-- Hero Banner -->
     <section class="relative bg-cover bg-center h-[500px]" style="background-image: url('https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80');">
@@ -18,33 +22,82 @@
         </div>
     </section>
 
-    <!-- Featured Categories -->
-    <section class="py-12 bg-white">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold mb-8 text-center font-heading">Shop By Category</h2>
+    <!-- Categories -->
+    <section class="categories-section py-8">
+        <div class="container mx-auto px-4 relative pb-2">
+            <h2 class="text-2xl font-bold mb-6">Game Categories</h2>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                @forelse ($categories as $category)
-                    <a href="{{ route('categories.show', $category->slug) }}" class="group">
-                        <div class="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow transition-shadow aspect-square flex items-center justify-center p-4">
-                            @if ($category->image)
-                                <img src="{{ $category->image }}" alt="{{ $category->name }}" class="w-16 h-16 object-contain">
-                            @else
-                                <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-                                    <span class="text-white text-2xl font-bold">{{ substr($category->name, 0, 1) }}</span>
+            {{-- Categories --}}
+            <div class="swiper categories-swiper relative">
+
+            <!-- Categories Arrow Navigation -->
+            <div class="absolute inset-0 pointer-events-none z-100 flex items-center">
+                <div class="w-full flex justify-between">
+                    <button class="categories-swiper-prev pointer-events-auto bg-white shadow-md rounded-full p-2 -ml-2 hover:bg-gray-100 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button class="categories-swiper-next pointer-events-auto bg-white shadow-md rounded-full p-2 -mr-2 hover:bg-gray-100 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+                <div class="swiper-wrapper">
+                    @foreach ($categories as $category)
+                        <div class="swiper-slide">
+                            <a href="{{ route('products.index') }}?type=games&categories={{ $category->id }}"
+                               class="bg-white rounded-lg shadow-md p-4 text-center transition-colors group category-card min-h-20 flex items-center justify-center hover:bg-primary hover:text-white cursor-pointer">
+                                <div class="category-card-content">
+                                    {{ $category->name }}
                                 </div>
-                            @endif
+                            </a>
                         </div>
-                        <h3 class="text-center mt-2 font-medium text-gray-800 group-hover:text-primary">{{ $category->name }}</h3>
-                    </a>
-                @empty
-                    <div class="col-span-full text-center py-8">
-                        <p class="text-gray-500">No categories available</p>
-                    </div>
-                @endforelse
+                    @endforeach
+                </div>
             </div>
         </div>
     </section>
+
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                new Swiper('.categories-swiper', {
+                    slidesPerView: 2,
+                    spaceBetween: 15,
+                    navigation: {
+                        nextEl: '.categories-swiper-next',
+                        prevEl: '.categories-swiper-prev',
+                    },
+                    // Enable touch/swipe scrolling
+                    mousewheel: true,
+                    keyboard: true,
+                    grabCursor: true,
+                    breakpoints: {
+                        640: {
+                            slidesPerView: 3,
+                            spaceBetween: 20,
+                        },
+                        768: {
+                            slidesPerView: 4,
+                            spaceBetween: 25,
+                        },
+                        1024: {
+                            slidesPerView: 6,
+                            spaceBetween: 30,
+                        }
+                    },
+                    scrollbar: {
+                        el: '.swiper-scrollbar',
+                        hide: true,
+                    }
+                });
+            });
+        </script>
+    @endpush
 
     <!-- Featured Games -->
     <section class="py-12 bg-gray-50">
@@ -209,15 +262,4 @@
         </div>
     </section>
 
-    <!-- Newsletter -->
-    <section class="py-16 bg-primary">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl font-bold text-white mb-4 font-heading">Join Our Newsletter</h2>
-            <p class="text-lg text-white opacity-80 mb-8 max-w-2xl mx-auto">Subscribe to receive updates on new releases, exclusive deals, and gaming news!</p>
-            <form class="max-w-md mx-auto flex">
-                <input type="email" placeholder="Your email address" class="flex-grow px-4 py-3 rounded-l focus:outline-none focus:ring-2 focus:ring-secondary">
-                <button type="submit" class="bg-secondary hover:bg-secondary-dark text-white font-medium px-6 py-3 rounded-r">Subscribe</button>
-            </form>
-        </div>
-    </section>
 @endsection
