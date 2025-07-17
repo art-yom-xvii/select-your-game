@@ -2,31 +2,59 @@
 
 @section('title', 'Browse Products')
 
+@push('styles')
+    <style>
+        .fade-in-product {
+            opacity: 0;
+            transform: translateY(24px) scale(0.98);
+            transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        .fade-in-product.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    </style>
+@endpush
+
 @section('content')
-    <div class="bg-white py-6">
-        <div class="container mx-auto px-4">
-            <nav class="flex" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="{{ route('home') }}" class="text-gray-700 hover:text-primary">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
-                            </svg>
-                            Home
-                        </a>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span class="ml-1 text-gray-500 md:ml-2">Products</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-        </div>
-    </div>
+    @php
+        $breadcrumbItems = [
+            [
+                'label' => 'Home',
+                'url' => route('home'),
+                'icon' => '<svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>',
+                'active' => false,
+            ],
+            [
+                'label' => 'Products',
+                'url' => '',
+                'icon' => '<svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>',
+                'active' => true,
+            ],
+        ];
+        $breadcrumbSlot = '<div class="w-full md:w-auto flex justify-center md:justify-end" id="product-count-container" data-total-count="'.e($products->total()).'">
+            <span class="inline-block text-gray-700 rounded px-4 py-2 text-sm font-medium" id="product-count-text">Displaying '.e($products->count()).' items of '.e($products->total()).' items</span>
+        </div>';
+    @endphp
+    @include('partials.breadcrumb', ['items' => $breadcrumbItems, 'slot' => $breadcrumbSlot])
+
+    <script>
+                function updateProductCount(visibleCount, totalCount) {
+                    document.getElementById('product-count-text').textContent =
+                        `Displaying ${visibleCount} items of ${totalCount} items`;
+                }
+
+                // Example: Listen for custom events when products are updated (e.g., after filters or load more)
+                document.addEventListener('products:updated', function(e) {
+                    // e.detail should contain { visibleCount, totalCount }
+                    if (e.detail && typeof e.detail.visibleCount !== 'undefined' && typeof e.detail.totalCount !== 'undefined') {
+                        updateProductCount(e.detail.visibleCount, e.detail.totalCount);
+                    }
+                });
+
+                // If you use AJAX to load more/filter products, dispatch this event after updating the product grid:
+                // document.dispatchEvent(new CustomEvent('products:updated', { detail: { visibleCount: newCount, totalCount: totalCount } }));
+            </script>
 
     <section class="py-8">
         <div class="container mx-auto px-4">
@@ -147,7 +175,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         @include('products.partials.product-grid', ['products' => $products])
                     </div>
 
@@ -308,30 +336,48 @@
                 loadMoreButton.innerHTML = 'Loading...';
                 loadMoreButton.classList.add('opacity-50', 'cursor-not-allowed');
 
-                // Fetch the next page of products
+                // Fetch the next page of products (expect JSON)
                 fetch(`${window.location.pathname}?${params.toString()}`, {
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
                     }
                 })
-                .then(response => response.text())
-                .then(html => {
-                    // Create a temporary div to parse the HTML
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = html;
-
-                    // Find the product grid and new products
-                    const productGrid = document.querySelector('.grid');
-                    const newProducts = tempDiv.querySelectorAll('.game-card-hover');
-
-                    // Append new products to the grid
-                    newProducts.forEach(product => {
-                        productGrid.appendChild(product);
-                    });
-
-                    // Update or remove Load More button
-                    if (currentPage >= totalPages) {
+                .then(response => response.json())
+                .then(data => {
+                    const productGrid = document.getElementById('product-grid');
+                    if (data && data.html) {
+                        // Create a temporary div to parse the HTML
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = data.html;
+                        const newProducts = tempDiv.querySelectorAll('.game-card-hover');
+                        newProducts.forEach(product => {
+                            product.classList.add('fade-in-product');
+                            productGrid.appendChild(product);
+                            // Force reflow to enable transition
+                            void product.offsetWidth;
+                            product.classList.add('visible');
+                            // Remove the class after animation for future loads
+                            setTimeout(() => product.classList.remove('fade-in-product', 'visible'), 600);
+                        });
+                        // Dispatch event to update product count
+                        const totalCount = document.getElementById('product-count-container').dataset.totalCount;
+                        document.dispatchEvent(new CustomEvent('products:updated', {
+                            detail: {
+                                visibleCount: productGrid.querySelectorAll('.game-card-hover').length,
+                                totalCount: totalCount
+                            }
+                        }));
+                    }
+                    // Remove or update Load More button
+                    if (!data || !data.has_more || !data.html || data.html.trim() === '') {
                         loadMoreButton.remove();
+                        if (!data || !data.html || data.html.trim() === '') {
+                            const msg = document.createElement('div');
+                            msg.className = 'text-gray-500 text-center my-4';
+                            msg.textContent = 'No more products found.';
+                            productGrid.appendChild(msg);
+                        }
                     } else {
                         loadMoreButton.disabled = false;
                         loadMoreButton.innerHTML = 'Load More Products';
