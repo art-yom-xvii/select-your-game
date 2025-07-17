@@ -32,9 +32,35 @@
                 'active' => true,
             ],
         ];
-        $breadcrumbSlot = '<div class="w-full md:w-auto flex justify-center md:justify-end" id="product-count-container" data-total-count="'.e($products->total()).'">
-            <span class="inline-block text-gray-700 rounded px-4 py-2 text-sm font-medium" id="product-count-text">Displaying '.e($products->count()).' items of '.e($products->total()).' items</span>
-        </div>';
+
+        // {{-- Search Form Section --}} & {{-- Product Count Section --}}
+        $breadcrumbSlot = '
+            <div class="w-full flex gap-2 md:gap-4 justify-center items-center">
+                <div class="w-full flex justify-center mb-2 md:mb-0 rounded-lg p-2">
+                    <form method="GET" action="" class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto justify-center">
+                        <input
+                            type="text"
+                            name="search"
+                            value="'.e(request('search', '')).'"
+                            placeholder="Search products..."
+                            class="w-full sm:w-96 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+                        >
+                        '.collect(request()->except(['search', 'page']))->map(function($value, $key) {
+                            if (is_array($value)) {
+                                return collect($value)->map(function($v) use ($key) {
+                                    return '<input type="hidden" name="'.$key.'[]" value="'.e($v).'">';
+                                })->implode('');
+                            } else {
+                                return '<input type="hidden" name="'.$key.'" value="'.e($value).'">';
+                            }
+                        })->implode('').'                        <button type="submit" class="border border-primary text-primary bg-white hover:bg-primary hover:text-white font-bold px-6 py-2 rounded-lg transition">Search</button>
+                    </form>
+                </div>
+                <div class="w-full flex justify-center md:justify-end rounded-lg p-2" id="product-count-container" data-total-count="'.e($products->total()).'">
+                    <span class="inline-block text-gray-700 rounded px-4 py-2 text-sm font-medium" id="product-count-text">Displaying '.e($products->count()).' items of '.e($products->total()).' items</span>
+                </div>
+            </div>
+        ';
     @endphp
     @include('partials.breadcrumb', ['items' => $breadcrumbItems, 'slot' => $breadcrumbSlot])
 
@@ -279,6 +305,7 @@
             params.delete('platforms');
             params.delete('type');
             params.delete('sort');
+            params.delete('search'); // Also clear the search bar
             window.location.href = `${window.location.pathname}?${params.toString()}`;
         });
 

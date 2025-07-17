@@ -70,6 +70,21 @@ class ProductController extends Controller
             $query->where('product_type', 'merchandise');
         }
 
+        // Search filtering
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $words = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+            $query->where(function($q) use ($words) {
+                foreach ($words as $word) {
+                    $normalized = strtolower(str_replace('-', '', $word));
+                    $q->where(function($sub) use ($normalized) {
+                        $sub->whereRaw('LOWER(REPLACE(name, "-", "")) LIKE ?', ["%{$normalized}%"])
+                            ->orWhereRaw('LOWER(REPLACE(description, "-", "")) LIKE ?', ["%{$normalized}%"]);
+                    });
+                }
+            });
+        }
+
         // Sorting
         switch ($sort) {
             case 'price-asc':
