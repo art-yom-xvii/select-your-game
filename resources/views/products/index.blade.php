@@ -14,6 +14,7 @@
             transform: translateY(0) scale(1);
         }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
 @endpush
 
 @section('content')
@@ -159,6 +160,29 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-white p-6 rounded shadow-sm mt-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold">Price</h3>
+                            <button type="button" class="clear-filter text-sm text-primary hover:underline" data-filter="price">Clear</button>
+                        </div>
+                        <div class="flex flex-col items-center w-full">
+                            <div id="price-slider" class="w-full mb-4"
+                                 data-min="{{ $priceMin ?? 0 }}"
+                                 data-max="{{ $priceMax ?? 500 }}"></div>
+                            <div class="flex justify-between w-full">
+                                <div>
+                                    <span>$</span>
+                                    <input type="number" id="price-min-input" class="border rounded px-2 py-1 w-24" min="0" max="500" value="{{ request('price_min', 0) }}">
+                                </div>
+                                <span class="mx-2">to</span>
+                                <div>
+                                    <span>$</span>
+                                    <input type="number" id="price-max-input" class="border rounded px-2 py-1 w-24" min="0" max="500" value="{{ request('price_max', 500) }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Product Grid -->
@@ -220,8 +244,15 @@
 @endsection
 
 @push('scripts')
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Restore scroll position if present
+        const scrollPos = sessionStorage.getItem('scrollPos');
+        if (scrollPos !== null) {
+            window.scrollTo(0, parseInt(scrollPos));
+            sessionStorage.removeItem('scrollPos');
+        }
         // Handle filter changes
         const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
         const filterRadios = document.querySelectorAll('.filter-radio');
@@ -231,7 +262,7 @@
 
         console.log('Filter Checkboxes:', filterCheckboxes);
 
-        const applyFilters = () => {
+        let applyFilters = () => {
             const params = new URLSearchParams(window.location.search);
 
             // Get checkbox filters (categories, platforms)
@@ -283,6 +314,7 @@
             // Update URL
             const newUrl = `${window.location.pathname}?${params.toString()}`;
             console.log('New URL:', newUrl);
+            sessionStorage.setItem('scrollPos', window.scrollY);
             window.location.href = newUrl;
         };
 
@@ -305,7 +337,24 @@
             params.delete('platforms');
             params.delete('type');
             params.delete('sort');
-            params.delete('search'); // Also clear the search bar
+            params.delete('search');
+            params.delete('price_min');
+            params.delete('price_max');
+
+            // Reset price slider and inputs to dynamic min/max
+            var priceSlider = document.getElementById('price-slider');
+            var priceMinInput = document.getElementById('price-min-input');
+            var priceMaxInput = document.getElementById('price-max-input');
+            var minPrice = parseInt(priceSlider.getAttribute('data-min')) || 0;
+            var maxPrice = parseInt(priceSlider.getAttribute('data-max')) || 500;
+
+            if (priceSlider && priceSlider.noUiSlider) {
+                priceSlider.noUiSlider.set([minPrice, maxPrice]);
+            }
+            if (priceMinInput) priceMinInput.value = minPrice;
+            if (priceMaxInput) priceMaxInput.value = maxPrice;
+
+            sessionStorage.setItem('scrollPos', window.scrollY);
             window.location.href = `${window.location.pathname}?${params.toString()}`;
         });
 
@@ -337,12 +386,67 @@
                         }
                     });
                     params.delete('type');
+                } else if (filterType === 'price') {
+                    const priceMin = document.getElementById('price-min-input');
+                    const priceMax = document.getElementById('price-max-input');
+                    priceMin.value = 0;
+                    priceMax.value = 500;
+                    params.delete('price_min');
+                    params.delete('price_max');
                 }
 
                 // Update URL
+                sessionStorage.setItem('scrollPos', window.scrollY);
                 window.location.href = `${window.location.pathname}?${params.toString()}`;
             });
         });
+
+        // Price Range Slider
+        var priceSlider = document.getElementById('price-slider');
+        var priceMinInput = document.getElementById('price-min-input');
+        var priceMaxInput = document.getElementById('price-max-input');
+        var minPrice = parseInt(priceSlider.getAttribute('data-min')) || 0;
+        var maxPrice = parseInt(priceSlider.getAttribute('data-max')) || 500;
+
+        if (priceSlider && priceMinInput && priceMaxInput) {
+            noUiSlider.create(priceSlider, {
+                start: [parseInt(priceMinInput.value) || minPrice, parseInt(priceMaxInput.value) || maxPrice],
+                connect: true,
+                range: {
+                    'min': minPrice,
+                    'max': maxPrice
+                },
+                step: 1,
+                tooltips: false,
+                format: {
+                    to: function (value) { return Math.round(value); },
+                    from: function (value) { return Number(value); }
+                }
+            });
+
+            priceSlider.noUiSlider.on('update', function(values, handle) {
+                if (handle === 0) {
+                    priceMinInput.value = values[0];
+                } else {
+                    priceMaxInput.value = values[1];
+                }
+            });
+
+            priceSlider.noUiSlider.on('change', function(values) {
+                const params = new URLSearchParams(window.location.search);
+                params.set('price_min', values[0]);
+                params.set('price_max', values[1]);
+                sessionStorage.setItem('scrollPos', window.scrollY);
+                window.location.href = `${window.location.pathname}?${params.toString()}`;
+            });
+
+            priceMinInput.addEventListener('change', function() {
+                priceSlider.noUiSlider.set([this.value, null]);
+            });
+            priceMaxInput.addEventListener('change', function() {
+                priceSlider.noUiSlider.set([null, this.value]);
+            });
+        }
 
         const loadMoreButton = document.getElementById('load-more-products');
 
@@ -420,5 +524,5 @@
             });
         }
     });
-</script>
+    </script>
 @endpush

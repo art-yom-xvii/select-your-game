@@ -19,10 +19,10 @@ class ProductController extends Controller
     {
         // Detailed logging of request parameters
         Log::channel('daily')->info('Product Index Request', [
-            'categories' => $request['categories'] ?? null,
-            'platforms' => $request['platforms'] ?? null,
-            'type' => $request['type'] ?? null,
-            'sort' => $request['sort'] ?? null,
+            'categories' => $request->input('categories', null),
+            'platforms' => $request->input('platforms', null),
+            'type' => $request->input('type', null),
+            'sort' => $request->input('sort', null),
         ]);
 
         // Start with base query
@@ -38,10 +38,10 @@ class ProductController extends Controller
         ]);
 
         // Normalize input parameters
-        $categories = $request['categories'] ?? [];
-        $platforms = $request['platforms'] ?? [];
-        $type = $request['type'] ?? null;
-        $sort = $request['sort'] ?? 'newest';
+        $categories = $request->input('categories', []);
+        $platforms = $request->input('platforms', []);
+        $type = $request->input('type', null);
+        $sort = $request->input('sort', 'newest');
 
         // Convert comma-separated strings to arrays if needed
         $categories = is_string($categories) ? explode(',', $categories) : $categories;
@@ -85,6 +85,18 @@ class ProductController extends Controller
             });
         }
 
+        // Price filtering
+        if ($request->filled('price_min')) {
+            $query->where('price', '>=', floatval($request->input('price_min')));
+        }
+        if ($request->filled('price_max')) {
+            $query->where('price', '<=', floatval($request->input('price_max')) + 0.99);
+        }
+
+        // Get min and max price of filtered products
+        $priceMin = (clone $query)->min('price');
+        $priceMax = (clone $query)->max('price');
+
         // Sorting
         switch ($sort) {
             case 'price-asc':
@@ -123,6 +135,8 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => Category::active()->get(),
             'platforms' => Platform::active()->get(),
+            'priceMin' => $priceMin,
+            'priceMax' => $priceMax,
         ]);
     }
 
