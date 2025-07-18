@@ -52,8 +52,8 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
-    'asset_url' => env('ASSET_URL', env('APP_URL', 'http://localhost/breeze/public')),
+    'url' => env('APP_URL', 'https://laravel.dev'),
+    'asset_url' => env('ASSET_URL', env('APP_URL', 'https://laravel.dev/breeze/public')),
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

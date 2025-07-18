@@ -127,3 +127,14 @@
 .swiper-scrollbar-drag {
     background: #6a21c0;
 }
+
+.fade-in-product {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fade-in-product.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}

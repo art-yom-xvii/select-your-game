@@ -3,17 +3,6 @@
 @section('title', 'Browse Products')
 
 @push('styles')
-    <style>
-        .fade-in-product {
-            opacity: 0;
-            transform: translateY(24px) scale(0.98);
-            transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1);
-        }
-        .fade-in-product.visible {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
 @endpush
 
@@ -91,7 +80,7 @@
                     <div class="bg-white p-6 rounded shadow-sm mb-6">
                         <!-- Clear All Filters Button -->
                         <div class="mt-6 text-center">
-                            <button id="clear-all-filters" class="bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded">
+                            <button id="clear-all-filters" class="bg-secondary hover:bg-secondary-dark text-white py-2 px-4 rounded">
                                 Clear All Filters
                             </button>
                         </div>
@@ -232,7 +221,7 @@
                     <!-- Load More Button -->
                     @if ($products->hasMorePages())
                         <div class="mt-8 text-center">
-                            <button id="load-more-products" class="bg-primary hover:bg-primary-dark text-white py-2 px-6 rounded-lg">
+                            <button id="load-more-products" class="bg-primary hover:bg-primary-dark text-white py-2 px-6 rounded-lg cursor-pointer">
                                 Load More Products
                             </button>
                         </div>
@@ -245,7 +234,7 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
-    <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         // Restore scroll position if present
         const scrollPos = sessionStorage.getItem('scrollPos');
@@ -524,5 +513,5 @@
             });
         }
     });
-    </script>
+</script>
 @endpush

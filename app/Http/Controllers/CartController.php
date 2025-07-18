@@ -29,7 +29,7 @@ class CartController extends Controller
     /**
      * Add a product to the cart.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
@@ -59,6 +59,11 @@ class CartController extends Controller
 
         // Update cart total
         $cart->calculateTotal();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            $cartCount = $cart->items()->sum('quantity');
+            return response()->json(['success' => true, 'message' => $product->name . ' added to your cart!', 'cart_count' => $cartCount]);
+        }
 
         return redirect()->route('cart.index')
             ->with('success', $product->name . ' added to your cart!');
