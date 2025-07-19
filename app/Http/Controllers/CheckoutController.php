@@ -35,7 +35,7 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty.');
         }
 
-        return view('checkout.index', [
+        return view('checkout.checkout-form', [
             'cart' => $cart,
         ]);
     }

@@ -140,7 +140,7 @@ class ProductController extends Controller
         }
 
         // Regular page view
-        return view('products.index', [
+        return view('products.products', [
             'products' => $products,
             'categories' => Category::active()
                 ->withCount(['products' => function ($query) {

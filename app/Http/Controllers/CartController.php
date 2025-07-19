@@ -20,7 +20,7 @@ class CartController extends Controller
     {
         $cart = $this->getOrCreateCart($request);
 
-        return view('cart.index', [
+        return view('cart.cart', [
             'cart' => $cart,
             'items' => $cart->items()->with('product.primaryImage')->get(),
         ]);
