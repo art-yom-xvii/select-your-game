@@ -3,12 +3,113 @@
     <div class="container mx-auto px-4 text-center">
         <h2 class="text-3xl font-bold text-white mb-4 font-heading">Join Our Newsletter</h2>
         <p class="text-lg text-white opacity-80 mb-8 max-w-2xl mx-auto">Subscribe to receive updates on new releases, exclusive deals, and gaming news!</p>
-        <form class="max-w-md mx-auto flex">
-            <input type="email" placeholder="Your email address" class="flex-grow px-4 py-3 rounded-l border border-white/50 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-secondary">
-            <button type="submit" class="bg-secondary hover:bg-secondary-dark text-white font-medium px-6 py-3 rounded-r cursor-pointer">Subscribe</button>
+        @if (session('success'))
+            <div class="max-w-md mx-auto mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                {{ session('success') }}
+            </div>
+        @endif
+        @if (session('warning'))
+            <div class="max-w-md mx-auto mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+                {{ session('warning') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="max-w-md mx-auto mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {{ session('error') }}
+            </div>
+        @endif
+        <form action="{{ route('newsletter.subscribe') }}" method="POST" class="max-w-md mx-auto flex">
+            @csrf
+            <input type="email" name="email" placeholder="Your email address" required class="flex-grow px-4 py-3 rounded-l border border-white/50 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-secondary bg-white/10">
+            <button type="submit" class="bg-secondary hover:bg-secondary-dark text-white font-medium px-6 py-3 rounded-r cursor-pointer transition">Subscribe</button>
         </form>
+        @error('email')
+            <div class="max-w-md mx-auto mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                {{ $message }}
+            </div>
+        @enderror
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle newsletter subscription forms
+    const newsletterForms = document.querySelectorAll('form[action*="newsletter/subscribe"]');
+
+    newsletterForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+
+            // Show loading state
+            submitButton.textContent = 'Subscribing...';
+            submitButton.disabled = true;
+
+            // Remove any existing messages
+            const existingMessages = form.parentElement.querySelectorAll('.newsletter-message');
+            existingMessages.forEach(msg => msg.remove());
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Create message element
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'newsletter-message max-w-md mx-auto mb-4 p-3 rounded text-sm';
+
+                if (data.type === 'success') {
+                    messageDiv.className += ' bg-green-100 border border-green-400 text-green-700';
+                } else if (data.type === 'warning') {
+                    messageDiv.className += ' bg-yellow-100 border border-yellow-400 text-yellow-700';
+                } else {
+                    messageDiv.className += ' bg-red-100 border border-red-400 text-red-700';
+                }
+
+                messageDiv.textContent = data.message;
+
+                // Insert message before the form
+                form.parentElement.insertBefore(messageDiv, form);
+
+                // Clear form if successful
+                if (data.type === 'success') {
+                    form.reset();
+                }
+
+                // Auto-remove message after 5 seconds
+                setTimeout(() => {
+                    if (messageDiv.parentElement) {
+                        messageDiv.remove();
+                    }
+                }, 5000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Show error message
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'newsletter-message max-w-md mx-auto mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+
+                form.parentElement.insertBefore(messageDiv, form);
+            })
+            .finally(() => {
+                // Reset button
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+            });
+        });
+    });
+});
+</script>
 
 <footer class="bg-gray-900 text-white py-12">
     <div class="container mx-auto px-4">
@@ -59,9 +160,10 @@
             <div>
                 <h3 class="text-lg font-bold mb-4">Newsletter</h3>
                 <p class="text-gray-400 mb-4">Subscribe to our newsletter to receive news and exclusive offers.</p>
-                <form action="#" method="POST" class="flex">
+                <form action="{{ route('newsletter.subscribe') }}" method="POST" class="flex">
+                    @csrf
                     <input type="email" name="email" placeholder="Your email" required class="flex-grow px-4 py-2 rounded-l text-gray-900">
-                    <button type="submit" class="bg-primary hover:bg-primary-dark px-4 py-2 rounded-r cursor-pointer">Subscribe</button>
+                    <button type="submit" class="bg-primary hover:bg-primary-dark px-4 py-2 rounded-r cursor-pointer transition">Subscribe</button>
                 </form>
             </div>
         </div>
