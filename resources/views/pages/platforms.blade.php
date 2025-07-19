@@ -63,7 +63,7 @@
                             </ul>
                         </div>
 
-                        <a href="{{ route('products.index') }}?platforms=4&sort=newest" class="bg-xbox hover:bg-green-700 text-white py-2 px-4 rounded font-medium inline-block">Browse Xbox Games</a>
+                        <a href="{{ route('products.index') }}?platforms=15&sort=newest" class="bg-xbox hover:bg-green-700 text-white py-2 px-4 rounded font-medium inline-block">Browse Xbox Games</a>
                     </div>
                 </div>
 
@@ -89,7 +89,7 @@
                             </ul>
                         </div>
 
-                        <a href="{{ route('products.index') }}?platforms=10&sort=newest" class="bg-nintendo hover:bg-red-700 text-white py-2 px-4 rounded font-medium inline-block">Browse Switch Games</a>
+                        <a href="{{ route('products.index') }}?platforms=16&sort=newest" class="bg-nintendo hover:bg-red-700 text-white py-2 px-4 rounded font-medium inline-block">Browse Switch Games</a>
                     </div>
                 </div>
             </div>
