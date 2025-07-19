@@ -56,38 +56,54 @@ class FetchIGDBData extends Command
     }
 
     /**
-     * Fetch platforms from IGDB and create them in our database
+     * Update products with NULL platform_id by matching to IGDB platforms.
+     * Usage: php artisan igdb:update-null-platforms
      */
-    private function fetchAndCreatePlatforms(): void
+    public function handleUpdateNullPlatforms(): int
     {
-        $this->info('Fetching platforms from IGDB...');
+        $this->info('Updating products with NULL platform_id...');
+        $products = Product::whereNull('platform_id')->get();
+        $updated = 0;
 
-        // Get platforms from IGDB
-        $platforms = IGDBPlatform::with(['platform_logo'])
-            ->where('category', '=', 1) // Console platforms
-            ->orWhere('category', '=', 5) // Portable console
-            ->get();
+        $bar = $this->output->createProgressBar(count($products));
 
-        $this->info('Found ' . count($platforms) . ' platforms');
-        $bar = $this->output->createProgressBar(count($platforms));
+        foreach ($products as $product) {
+            try {
+                // Try to find the IGDB game by name
+                $igdbGame = Game::where('name', $product->name)->with('platforms')->first();
 
-        foreach ($platforms as $igdbPlatform) {
-            // Check if platform already exists
-            $platform = Platform::where('name', $igdbPlatform->name)->first();
+                if ($igdbGame && isset($igdbGame->platforms) && is_array($igdbGame->platforms)) {
+                    foreach ($igdbGame->platforms as $igdbPlatform) {
+                        // Try exact match first (case-insensitive)
+                        $localPlatform = Platform::whereRaw('LOWER(name) = ?', [strtolower($igdbPlatform->name)])->first();
 
-            if (!$platform) {
-                $logoUrl = null;
-                if (isset($igdbPlatform->platform_logo)) {
-                    $logoUrl = 'https://images.igdb.com/igdb/image/upload/t_thumb/' . $igdbPlatform->platform_logo->image_id . '.jpg';
+                        if (!$localPlatform) {
+                            // Try partial match for common variations
+                            $searchTerms = [
+                                strtolower($igdbPlatform->name),
+                                str_replace(['(', ')', '-'], '', strtolower($igdbPlatform->name)),
+                                str_replace(['PlayStation', 'PS'], 'PlayStation', strtolower($igdbPlatform->name)),
+                                str_replace(['Xbox', 'XBox'], 'Xbox', strtolower($igdbPlatform->name)),
+                                str_replace(['Nintendo', 'Nintendo Switch'], 'Nintendo Switch', strtolower($igdbPlatform->name)),
+                            ];
+
+                            foreach ($searchTerms as $term) {
+                                $localPlatform = Platform::whereRaw('LOWER(name) LIKE ?', ['%' . $term . '%'])->first();
+                                if ($localPlatform) break;
+                            }
+                        }
+
+                        if ($localPlatform) {
+                            $product->platform_id = $localPlatform->id;
+                            $product->save();
+                            $updated++;
+                            $this->line("\nUpdated '{$product->name}' with platform '{$localPlatform->name}'");
+                            break;
+                        }
+                    }
                 }
-
-                Platform::create([
-                    'name' => $igdbPlatform->name,
-                    'slug' => Str::slug($igdbPlatform->name),
-                    'logo' => $logoUrl,
-                    'description' => $igdbPlatform->summary ?? null,
-                    'is_active' => true,
-                ]);
+            } catch (\Exception $e) {
+                $this->error("\nError updating product {$product->name}: " . $e->getMessage());
             }
 
             $bar->advance();
@@ -95,6 +111,59 @@ class FetchIGDBData extends Command
 
         $bar->finish();
         $this->newLine();
+        $this->info("Updated {$updated} products with platform_id.");
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Fetch platforms from IGDB and create them in our database
+     */
+    private function fetchAndCreatePlatforms(): void
+    {
+        $this->info('Setting up 3 main platforms...');
+
+        // Only create the 3 main platforms we want
+        $platforms = [
+            [
+                'name' => 'PlayStation 4',
+                'slug' => 'playstation-4',
+                'description' => 'Sony PlayStation 4 gaming console',
+                'logo' => 'https://images.igdb.com/igdb/image/upload/t_thumb/pl6f.jpg'
+            ],
+            [
+                'name' => 'Xbox One',
+                'slug' => 'xbox-one',
+                'description' => 'Microsoft Xbox One gaming console',
+                'logo' => 'https://images.igdb.com/igdb/image/upload/t_thumb/pl6e.jpg'
+            ],
+            [
+                'name' => 'Nintendo Switch',
+                'slug' => 'nintendo-switch',
+                'description' => 'Nintendo Switch hybrid gaming console',
+                'logo' => 'https://images.igdb.com/igdb/image/upload/t_thumb/pl6f.jpg'
+            ]
+        ];
+
+        foreach ($platforms as $platformData) {
+            // Check if platform already exists
+            $platform = Platform::where('name', $platformData['name'])->first();
+
+            if (!$platform) {
+                Platform::create([
+                    'name' => $platformData['name'],
+                    'slug' => $platformData['slug'],
+                    'logo' => $platformData['logo'],
+                    'description' => $platformData['description'],
+                    'is_active' => true,
+                ]);
+
+                $this->line("Created platform: {$platformData['name']}");
+            } else {
+                $this->line("Platform already exists: {$platformData['name']}");
+            }
+        }
+
+        $this->info('Platform setup completed.');
     }
 
     /**
@@ -227,12 +296,34 @@ class FetchIGDBData extends Command
                 continue;
             }
 
-            // Get platform
-            $platformName = isset($igdbGame->platforms[0]->name) ? $igdbGame->platforms[0]->name : null;
+            // Improved platform matching: check all IGDB platforms for a match
             $platform = null;
+            if (isset($igdbGame->platforms) && is_array($igdbGame->platforms)) {
+                foreach ($igdbGame->platforms as $igdbPlatform) {
+                    // Try exact match first (case-insensitive)
+                    $localPlatform = Platform::whereRaw('LOWER(name) = ?', [strtolower($igdbPlatform->name)])->first();
 
-            if ($platformName) {
-                $platform = Platform::where('name', $platformName)->first();
+                    if (!$localPlatform) {
+                        // Try partial match for common variations
+                        $searchTerms = [
+                            strtolower($igdbPlatform->name),
+                            str_replace(['(', ')', '-'], '', strtolower($igdbPlatform->name)),
+                            str_replace(['PlayStation', 'PS'], 'PlayStation', strtolower($igdbPlatform->name)),
+                            str_replace(['Xbox', 'XBox'], 'Xbox', strtolower($igdbPlatform->name)),
+                            str_replace(['Nintendo', 'Nintendo Switch'], 'Nintendo Switch', strtolower($igdbPlatform->name)),
+                        ];
+
+                        foreach ($searchTerms as $term) {
+                            $localPlatform = Platform::whereRaw('LOWER(name) LIKE ?', ['%' . $term . '%'])->first();
+                            if ($localPlatform) break;
+                        }
+                    }
+
+                    if ($localPlatform) {
+                        $platform = $localPlatform;
+                        break;
+                    }
+                }
             }
 
             // For PlayStation 4 games, explicitly set the platform
@@ -250,6 +341,35 @@ class FetchIGDBData extends Command
                     ]);
 
                     $this->info('Created PlayStation 4 platform: ' . $platform->id);
+                }
+            }
+
+                        // Fallback to one of the 3 main platforms if no platform is found
+            if (!$platform) {
+                // Get the 3 main platforms
+                $ps4 = Platform::where('name', 'PlayStation 4')->first();
+                $xboxOne = Platform::where('name', 'Xbox One')->first();
+                $nintendoSwitch = Platform::where('name', 'Nintendo Switch')->first();
+
+                // Distribute evenly based on game ID
+                $platformChoice = $igdbGame->id % 3;
+
+                switch ($platformChoice) {
+                    case 0:
+                        $platform = $ps4;
+                        break;
+                    case 1:
+                        $platform = $xboxOne;
+                        break;
+                    case 2:
+                        $platform = $nintendoSwitch;
+                        break;
+                    default:
+                        $platform = $ps4; // Default fallback
+                }
+
+                if ($platform) {
+                    $this->info('Assigned to ' . $platform->name . ' platform');
                 }
             }
 

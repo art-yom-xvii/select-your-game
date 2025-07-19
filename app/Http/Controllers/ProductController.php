@@ -63,6 +63,15 @@ class ProductController extends Controller
             $query->whereIn('platform_id', $platforms);
         }
 
+        // Support filtering by platform slug (e.g., ?platform=ps4)
+        if ($request->filled('platform')) {
+            $platformSlug = $request->input('platform');
+            $platform = Platform::where('slug', $platformSlug)->first();
+            if ($platform) {
+                $query->where('platform_id', $platform->id);
+            }
+        }
+
         // Product type filtering
         if ($type === 'games') {
             $query->where('product_type', 'game');
@@ -133,8 +142,18 @@ class ProductController extends Controller
         // Regular page view
         return view('products.index', [
             'products' => $products,
-            'categories' => Category::active()->get(),
-            'platforms' => Platform::active()->get(),
+            'categories' => Category::active()
+                ->withCount(['products' => function ($query) {
+                    $query->active();
+                }])
+                ->where('products_count', '>', 0)
+                ->get(),
+            'platforms' => Platform::active()
+                ->withCount(['products' => function ($query) {
+                    $query->active();
+                }])
+                ->where('products_count', '>', 0)
+                ->get(),
             'priceMin' => $priceMin,
             'priceMax' => $priceMax,
         ]);

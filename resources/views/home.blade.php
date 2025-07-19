@@ -118,12 +118,12 @@
 
                                 @if ($game->platform)
                                     <div class="absolute top-2 left-2">
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium
-                                            @if ($game->platform->slug === 'ps4') bg-ps4 text-white
-                                            @elseif ($game->platform->slug === 'xbox') bg-xbox text-white
-                                            @elseif ($game->platform->slug === 'switch') bg-nintendo text-white
-                                            @else bg-gray-600 text-white
-                                            @endif">
+                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-white"
+                                            style="background-color: @if ($game->platform->slug === 'playstation-4') var(--color-ps4)
+                                            @elseif ($game->platform->slug === 'xbox-one') var(--color-xbox)
+                                            @elseif ($game->platform->slug === 'nintendo-switch') var(--color-nintendo)
+                                            @else #6b7280
+                                            @endif;">
                                             {{ $game->platform->name }}
                                         </span>
                                     </div>
@@ -187,12 +187,12 @@
 
                             @if ($game->platform)
                                 <div class="absolute bottom-2 right-2">
-                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium
-                                        @if ($game->platform->slug === 'ps4') bg-ps4 text-white
-                                        @elseif ($game->platform->slug === 'xbox') bg-xbox text-white
-                                        @elseif ($game->platform->slug === 'switch') bg-nintendo text-white
-                                        @else bg-gray-600 text-white
-                                        @endif">
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-white"
+                                        style="background-color: @if ($game->platform->slug === 'playstation-4') var(--color-ps4)
+                                        @elseif ($game->platform->slug === 'xbox-one') var(--color-xbox)
+                                        @elseif ($game->platform->slug === 'nintendo-switch') var(--color-nintendo)
+                                        @else #6b7280
+                                        @endif;">
                                         {{ $game->platform->name }}
                                     </span>
                                 </div>

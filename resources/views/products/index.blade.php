@@ -324,6 +324,8 @@
             const params = new URLSearchParams(window.location.search);
             params.delete('categories');
             params.delete('platforms');
+            params.delete('category'); // Remove category slug
+            params.delete('platform'); // Remove platform slug
             params.delete('type');
             params.delete('sort');
             params.delete('search');

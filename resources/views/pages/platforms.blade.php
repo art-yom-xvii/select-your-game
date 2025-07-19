@@ -37,7 +37,7 @@
                             </ul>
                         </div>
 
-                        <a href="{{ route('products.index') }}?platform=ps4" class="bg-ps4 hover:bg-blue-700 text-white py-2 px-4 rounded font-medium inline-block">Browse PS4 Games</a>
+                        <a href="{{ route('products.index') }}?platforms=11&sort=newest" class="bg-ps4 hover:bg-blue-700 text-white py-2 px-4 rounded font-medium inline-block">Browse PS4 Games</a>
                     </div>
                 </div>
 
@@ -63,7 +63,7 @@
                             </ul>
                         </div>
 
-                        <a href="{{ route('products.index') }}?platform=xbox" class="bg-xbox hover:bg-green-700 text-white py-2 px-4 rounded font-medium inline-block">Browse Xbox Games</a>
+                        <a href="{{ route('products.index') }}?platforms=4&sort=newest" class="bg-xbox hover:bg-green-700 text-white py-2 px-4 rounded font-medium inline-block">Browse Xbox Games</a>
                     </div>
                 </div>
 
@@ -89,7 +89,7 @@
                             </ul>
                         </div>
 
-                        <a href="{{ route('products.index') }}?platform=switch" class="bg-nintendo hover:bg-red-700 text-white py-2 px-4 rounded font-medium inline-block">Browse Switch Games</a>
+                        <a href="{{ route('products.index') }}?platforms=10&sort=newest" class="bg-nintendo hover:bg-red-700 text-white py-2 px-4 rounded font-medium inline-block">Browse Switch Games</a>
                     </div>
                 </div>
             </div>
@@ -164,31 +164,31 @@
                     <div class="bg-white rounded-lg shadow p-5">
                         <ul class="divide-y divide-gray-200">
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=ps4" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=11&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Final Fantasy XVI</span>
                                     <span class="text-sm text-gray-500">RPG</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=ps4" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=11&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Resident Evil 4 Remake</span>
                                     <span class="text-sm text-gray-500">Horror</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=ps4" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=11&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Hogwarts Legacy</span>
                                     <span class="text-sm text-gray-500">Action RPG</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=ps4" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=11&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Star Wars Jedi: Survivor</span>
                                     <span class="text-sm text-gray-500">Action-Adventure</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=ps4" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=11&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Street Fighter 6</span>
                                     <span class="text-sm text-gray-500">Fighting</span>
                                 </a>
@@ -207,31 +207,31 @@
                     <div class="bg-white rounded-lg shadow p-5">
                         <ul class="divide-y divide-gray-200">
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=xbox" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=4&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Starfield</span>
                                     <span class="text-sm text-gray-500">RPG</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=xbox" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=4&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Forza Motorsport</span>
                                     <span class="text-sm text-gray-500">Racing</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=xbox" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=4&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Diablo IV</span>
                                     <span class="text-sm text-gray-500">Action RPG</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=xbox" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=4&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Redfall</span>
                                     <span class="text-sm text-gray-500">FPS</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=xbox" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=4&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Assassin's Creed Mirage</span>
                                     <span class="text-sm text-gray-500">Action-Adventure</span>
                                 </a>
@@ -250,31 +250,31 @@
                     <div class="bg-white rounded-lg shadow p-5">
                         <ul class="divide-y divide-gray-200">
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=switch" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=10&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">The Legend of Zelda: Tears of the Kingdom</span>
                                     <span class="text-sm text-gray-500">Adventure</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=switch" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=10&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Pikmin 4</span>
                                     <span class="text-sm text-gray-500">Strategy</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=switch" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=10&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Metroid Prime 4</span>
                                     <span class="text-sm text-gray-500">Action-Adventure</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=switch" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=10&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Fire Emblem Engage</span>
                                     <span class="text-sm text-gray-500">Strategy RPG</span>
                                 </a>
                             </li>
                             <li class="py-3">
-                                <a href="{{ route('products.index') }}?platform=switch" class="flex items-center">
+                                <a href="{{ route('products.index') }}?platforms=10&sort=newest" class="flex items-center">
                                     <span class="flex-grow font-medium text-gray-800 hover:text-primary">Kirby's Return to Dream Land Deluxe</span>
                                     <span class="text-sm text-gray-500">Platformer</span>
                                 </a>
@@ -324,7 +324,7 @@
                             <span>Headsets</span>
                         </li>
                     </ul>
-                    <a href="{{ route('products.index') }}?type=merchandise&platform=ps4" class="text-ps4 hover:underline font-medium">View PS4 Accessories →</a>
+                    <a href="{{ route('products.index') }}?type=merchandise&platforms=11&sort=newest" class="text-ps4 hover:underline font-medium">View PS4 Accessories →</a>
                 </div>
 
                 <div class="bg-white rounded-lg shadow p-6">
@@ -355,7 +355,7 @@
                             <span>Gaming Headsets</span>
                         </li>
                     </ul>
-                    <a href="{{ route('products.index') }}?type=merchandise&platform=xbox" class="text-xbox hover:underline font-medium">View Xbox Accessories →</a>
+                    <a href="{{ route('products.index') }}?type=merchandise&platforms=4&sort=newest" class="text-xbox hover:underline font-medium">View Xbox Accessories →</a>
                 </div>
 
                 <div class="bg-white rounded-lg shadow p-6">
@@ -386,7 +386,7 @@
                             <span>MicroSD Cards</span>
                         </li>
                     </ul>
-                    <a href="{{ route('products.index') }}?type=merchandise&platform=switch" class="text-nintendo hover:underline font-medium">View Switch Accessories →</a>
+                    <a href="{{ route('products.index') }}?type=merchandise&platforms=10&sort=newest" class="text-nintendo hover:underline font-medium">View Switch Accessories →</a>
                 </div>
             </div>
         </div>
