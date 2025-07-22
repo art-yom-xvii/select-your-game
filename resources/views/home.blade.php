@@ -62,41 +62,7 @@
     </section>
 
     @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                new Swiper('.categories-swiper', {
-                    slidesPerView: 2,
-                    spaceBetween: 15,
-                    navigation: {
-                        nextEl: '.categories-swiper-next',
-                        prevEl: '.categories-swiper-prev',
-                    },
-                    // Enable touch/swipe scrolling
-                    mousewheel: true,
-                    keyboard: true,
-                    grabCursor: true,
-                    breakpoints: {
-                        640: {
-                            slidesPerView: 3,
-                            spaceBetween: 20,
-                        },
-                        768: {
-                            slidesPerView: 4,
-                            spaceBetween: 25,
-                        },
-                        1024: {
-                            slidesPerView: 6,
-                            spaceBetween: 30,
-                        }
-                    },
-                    scrollbar: {
-                        el: '.swiper-scrollbar',
-                        hide: true,
-                    }
-                });
-            });
-        </script>
+        @vite(['resources/js/home.js'])
     @endpush
 
     <!-- Featured Games -->

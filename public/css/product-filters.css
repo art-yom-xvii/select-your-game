@@ -1,0 +1,59 @@
+/* Collapsible Categories Styles */
+.category-toggle {
+    transition: all 0.2s ease-in-out;
+}
+
+.category-toggle svg {
+    transition: transform 0.2s ease-in-out;
+}
+
+.category-toggle:hover {
+    color: var(--color-primary, #3b82f6);
+}
+
+.category-children {
+    transition: all 0.3s ease-in-out;
+}
+
+.category-group {
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 0.5rem;
+}
+
+.category-group:last-child {
+    border-bottom: none;
+}
+
+.categories-section-toggle {
+    transition: all 0.2s ease-in-out;
+}
+
+.categories-section-toggle svg {
+    transition: transform 0.2s ease-in-out;
+}
+
+.categories-section-toggle:hover {
+    color: var(--color-primary, #3b82f6);
+}
+
+.category-children {
+    border-left: 2px solid #e5e7eb;
+    margin-left: 1rem;
+    padding-left: 1rem;
+}
+
+.extra-categories.hidden {
+    display: none;
+}
+
+.show-more-categories-btn {
+    margin-top: 0.5rem;
+    display: block;
+}
+
+.category-toggle:focus,
+.categories-section-toggle:focus {
+    outline: 2px solid var(--color-primary, #3b82f6);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+}

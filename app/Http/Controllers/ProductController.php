@@ -143,11 +143,28 @@ class ProductController extends Controller
         return view('products.products', [
             'products' => $products,
             'categories' => Category::active()
+                ->whereNull('parent_id') // Only top-level categories
+                ->with(['children' => function ($query) {
+                    $query->active()
+                        ->withCount(['products' => function ($q) {
+                            $q->active();
+                        }])
+                        ->where('products_count', '>', 0);
+                }])
                 ->withCount(['products' => function ($query) {
                     $query->active();
                 }])
-                ->where('products_count', '>', 0)
-                ->get(),
+                ->get()
+                ->map(function ($category) {
+                    // Calculate total products including children
+                    $totalProducts = $category->products_count;
+                    foreach ($category->children as $child) {
+                        $totalProducts += $child->products_count;
+                    }
+                    $category->total_products_count = $totalProducts;
+                    return $category;
+                })
+                ->where('total_products_count', '>', 0),
             'platforms' => Platform::active()
                 ->withCount(['products' => function ($query) {
                     $query->active();

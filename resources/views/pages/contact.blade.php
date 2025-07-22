@@ -36,9 +36,7 @@
                     <div class="p-8 md:p-10">
                         <h2 class="text-2xl font-bold mb-6 font-heading text-primary text-center">Send Us a Message</h2>
                         @if (session('success'))
-                            <div class="bg-success/10 border border-success text-success px-4 py-3 rounded mb-6">
-                                {{ session('success') }}
-                            </div>
+                            {{-- Removed duplicate success message, now handled by toast in layout --}}
                         @endif
                         <form action="{{ route('pages.contact.submit') }}" method="POST" class="space-y-6">
                             @csrf

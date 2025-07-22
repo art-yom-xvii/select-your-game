@@ -4,9 +4,7 @@
         <h2 class="text-3xl font-bold text-white mb-4 font-heading">Join Our Newsletter</h2>
         <p class="text-lg text-white opacity-80 mb-8 max-w-2xl mx-auto">Subscribe to receive updates on new releases, exclusive deals, and gaming news!</p>
         @if (session('success'))
-            <div class="max-w-md mx-auto mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                {{ session('success') }}
-            </div>
+            {{-- Removed duplicate success message, now handled by toast in layout --}}
         @endif
         @if (session('warning'))
             <div class="max-w-md mx-auto mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
